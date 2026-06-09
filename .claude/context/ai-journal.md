@@ -40,4 +40,34 @@ Format for each entry:
 ### Entry 6
 - **Prompt:** Defined the purpose of this journal (prompt log of what/when prompted, response, accepted/rejected/challenged).
 - **Response:** Initialized this journal with the defined structure and backfilled the session's prompts.
+- **Outcome:** Accepted.
+
+### Entry 7
+- **Prompt:** Update the journal only on explicit request (do not auto-append / no hook).
+- **Response:** Confirmed; no hook set up, entries added on request only.
+- **Outcome:** Accepted.
+
+### Entry 8
+- **Prompt:** Record the tech stack with versions in `tech-stack.md` (Spring Boot latest, JDK 21, PostgreSQL, Flyway, JUnit latest) and reference it in `CLAUDE.md`.
+- **Response:** Created `tech-stack.md` with the stack table and added a reference in `CLAUDE.md`.
+- **Outcome:** Accepted.
+
+### Entry 9
+- **Prompt:** Create a Spring Boot project with root package `com.backend.assessment`; do not create any package unless asked.
+- **Response:** Scaffolded a minimal Maven project — `pom.xml` (Spring Boot 3.5.0, Java 21, web/data-jpa/validation, Flyway, PostgreSQL, test starter), main application class in the root package, and `application.yml`. No sub-packages, no tests, no migrations.
+- **Outcome:** Accepted.
+
+### Entry 10
+- **Prompt:** "yes" — verify the project compiles (`mvn compile`).
+- **Response:** Could not build — Maven not installed and only JDK 17 present (project targeted JDK 21). Presented options.
+- **Outcome:** User chose to skip compilation for now.
+
+### Entry 11
+- **Prompt:** Replace JDK 21 with JDK 17 in `tech-stack.md` and `CLAUDE.md`, and change the project configuration to JDK 17.
+- **Response:** Updated `tech-stack.md` and `CLAUDE.md` to JDK 17 and set `<java.version>` to 17 in `pom.xml`.
+- **Outcome:** Accepted.
+
+### Entry 12
+- **Prompt:** Add an entry to this journal.
+- **Response:** Appended entries 6–12 covering the prompts since the journal was initialized.
 - **Outcome:** Pending.

@@ -11,4 +11,5 @@ These rules are not optional. Apply every applicable rule on every generation.
 
 ## Context
 - [.claude/context/requirements.md](.claude/context/requirements.md) — contains the **problem statement** and requirements for this project.
-- [.claude/context/ai-journal.md](.claude/context/ai-journal.md) — working context / journal.
+- [.claude/context/tech-stack.md](.claude/context/tech-stack.md) — the **tech stack** (Spring Boot, JDK 17, PostgreSQL, Flyway, JUnit) with versions. Use this stack for all generated code.
+- [.claude/context/ai-journal.md](.claude/context/ai-journal.md) — prompt log / journal.
