@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Policy Overview Dashboard API
+  description: >
+    BFF endpoints for the Policy Overview Dashboard (APAC-2847).
+    Aggregates and transforms policy data into a frontend-friendly,
+    paginated format. Contract-first: schemas defined ahead of implementation.
+  version: 0.1.0
+
+paths:
+  /api/policies:
+    get:
+      tags:
+        - Policies
+      summary: List policies (paginated)
+      description: >
+        Returns a server-side paginated list of the user's policies for the
+        dashboard. Region and status are returned as human-readable display
+        values, and isExpiringSoon flags policies ending within 30 days.
+      operationId: getPolicies
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Zero-based page index.
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: Number of records per page.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of policies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedPolicyResponse'
+        '503':
+          description: The policy database is unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+
+    Premium:
+      type: object
+      description: A monetary premium amount with its ISO currency code.
+      properties:
+        amount:
+          type: number
+          format: double
+          description: Premium amount.
+          example: 1250.00
+        currency:
+          type: string
+          description: ISO 4217 currency code.
+          example: SGD
+      required:
+        - amount
+        - currency
+
+    PolicySummaryResponse:
+      type: object
+      description: A single policy as shown on the dashboard list.
+      properties:
+        policyNumber:
+          type: string
+          description: Unique policy identifier.
+          example: POL-SG-100245
+        holderName:
+          type: string
+          description: Name of the policy holder.
+          example: Jane Tan
+        region:
+          type: string
+          description: >
+            Human-readable region name (e.g. Singapore, Hong Kong, Australia,
+            India, Japan) — mapped from the internal region code.
+          example: Singapore
+        status:
+          type: string
+          description: >
+            Human-readable policy status in title case (e.g. Active, Lapsed) —
+            mapped from the internal status enum.
+          example: Active
+        premium:
+          $ref: '#/components/schemas/Premium'
+        startDate:
+          type: string
+          format: date
+          description: Policy start date.
+          example: 2024-01-15
+        endDate:
+          type: string
+          format: date
+          description: Policy end date.
+          example: 2025-01-15
+        isExpiringSoon:
+          type: boolean
+          description: True when the policy end date is within 30 days from today.
+          example: false
+      required:
+        - policyNumber
+        - holderName
+        - region
+        - status
+        - premium
+        - startDate
+        - endDate
+        - isExpiringSoon
+
+    PagedPolicyResponse:
+      type: object
+      description: Server-side paginated list of policies for the dashboard table.
+      properties:
+        content:
+          type: array
+          description: Policies in the current page.
+          items:
+            $ref: '#/components/schemas/PolicySummaryResponse'
+        page:
+          type: integer
+          format: int32
+          description: Zero-based index of the current page.
+          example: 0
+        size:
+          type: integer
+          format: int32
+          description: Requested page size.
+          example: 10
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of policies across all pages.
+          example: 137
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages.
+          example: 14
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+
+    ErrorResponse:
+      type: object
+      description: Standard error payload. Never exposes internal stack traces.
+      properties:
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code.
+          example: 503
+        message:
+          type: string
+          description: Human-readable error message.
+          example: The policy service is temporarily unavailable. Please try again later.
+        correlationId:
+          type: string
+          description: Correlation/request ID for tracing this error.
+          example: 3f1a9c20-7b4e-4f2a-9b2e-2a1c7d8e5f01
+      required:
+        - status
+        - message

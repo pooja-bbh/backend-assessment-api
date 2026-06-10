@@ -1,0 +1,8 @@
+com\backend\assessment\domain\models\PolicyTest.class
+com\backend\assessment\api\mapper\DomainToResponseDtoTest.class
+com\backend\assessment\api\controller\PolicyControllerTest$1.class
+com\backend\assessment\BackendAssessmentApplicationTest.class
+com\backend\assessment\api\controller\PolicyControllerTest.class
+com\backend\assessment\api\controller\PolicyControllerIntegrationTest.class
+com\backend\assessment\service\PolicyServiceTest.class
+com\backend\assessment\domain\models\MoneyTest.class
