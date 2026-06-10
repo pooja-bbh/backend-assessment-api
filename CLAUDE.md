@@ -3,6 +3,7 @@
 ## Mandatory rules
 Whenever you generate **anything** (code, tests, configuration, etc.), you MUST first refer to and comply with the rule files in [.claude/rules/](.claude/rules/):
 
+- [architecture.md](.claude/rules/architecture.md) — layering, package structure, and architectural rules.
 - [java-code-style.md](.claude/rules/java-code-style.md) — Java coding conventions.
 - [logging.md](.claude/rules/logging.md) — logging rules.
 - [testig.md](.claude/rules/testig.md) — testing rules.
