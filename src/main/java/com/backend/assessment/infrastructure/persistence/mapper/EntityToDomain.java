@@ -14,12 +14,15 @@ public class EntityToDomain {
                 entity.getPremiumAmount(),
                 Currency.getInstance(entity.getPremiumCurrency()));
         return new Policy(
+                entity.getId(),
                 entity.getPolicyNumber(),
                 entity.getHolderName(),
                 entity.getRegion(),
+                entity.getLineOfBusiness(),
                 entity.getStatus(),
                 premium,
                 entity.getStartDate(),
-                entity.getEndDate());
+                entity.getEndDate(),
+                entity.isFlaggedForReview());
     }
 }

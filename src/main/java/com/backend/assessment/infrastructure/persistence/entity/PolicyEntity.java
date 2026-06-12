@@ -1,5 +1,6 @@
 package com.backend.assessment.infrastructure.persistence.entity;
 
+import com.backend.assessment.domain.models.LineOfBusiness;
 import com.backend.assessment.domain.models.PolicyStatus;
 import com.backend.assessment.domain.models.Region;
 import jakarta.persistence.Column;
@@ -32,6 +33,10 @@ public class PolicyEntity {
     private Region region;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "line_of_business", nullable = false)
+    private LineOfBusiness lineOfBusiness;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private PolicyStatus status;
 
@@ -47,6 +52,9 @@ public class PolicyEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Column(name = "flagged_for_review", nullable = false)
+    private boolean flaggedForReview;
+
     protected PolicyEntity() {
     }
 
@@ -54,6 +62,7 @@ public class PolicyEntity {
             String policyNumber,
             String holderName,
             Region region,
+            LineOfBusiness lineOfBusiness,
             PolicyStatus status,
             BigDecimal premiumAmount,
             String premiumCurrency,
@@ -62,11 +71,13 @@ public class PolicyEntity {
         this.policyNumber = policyNumber;
         this.holderName = holderName;
         this.region = region;
+        this.lineOfBusiness = lineOfBusiness;
         this.status = status;
         this.premiumAmount = premiumAmount;
         this.premiumCurrency = premiumCurrency;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.flaggedForReview = false;
     }
 
     public Long getId() {
@@ -83,6 +94,10 @@ public class PolicyEntity {
 
     public Region getRegion() {
         return region;
+    }
+
+    public LineOfBusiness getLineOfBusiness() {
+        return lineOfBusiness;
     }
 
     public PolicyStatus getStatus() {
@@ -103,5 +118,9 @@ public class PolicyEntity {
 
     public LocalDate getEndDate() {
         return endDate;
+    }
+
+    public boolean isFlaggedForReview() {
+        return flaggedForReview;
     }
 }

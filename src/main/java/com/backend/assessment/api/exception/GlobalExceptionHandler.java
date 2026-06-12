@@ -1,6 +1,7 @@
 package com.backend.assessment.api.exception;
 
 import com.backend.assessment.api.dto.response.ErrorResponse;
+import com.backend.assessment.common.exception.ResourceNotFoundException;
 import com.backend.assessment.common.logging.CorrelationId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceNotFound(NoResourceFoundException exception) {
         String correlationId = MDC.get(CorrelationId.MDC_KEY);
         LOGGER.warn("Resource not found. correlationId={} path={}", correlationId, exception.getResourcePath());
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                NOT_FOUND_MESSAGE,
+                correlationId);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(ResourceNotFoundException exception) {
+        String correlationId = MDC.get(CorrelationId.MDC_KEY);
+        LOGGER.warn("Entity not found. correlationId={} message={}", correlationId, exception.getMessage());
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 NOT_FOUND_MESSAGE,

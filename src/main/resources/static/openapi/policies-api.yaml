@@ -4,21 +4,60 @@ info:
   description: >
     BFF endpoints for the Policy Overview Dashboard (APAC-2847).
     Aggregates and transforms policy data into a frontend-friendly,
-    paginated format. Contract-first: schemas defined ahead of implementation.
-  version: 0.1.0
+    paginated format. Contract-first: schemas and operations defined ahead of implementation.
+  version: 1.0.0
 
 paths:
-  /api/policies:
+  /api/v1/policies:
     get:
       tags:
         - Policies
-      summary: List policies (paginated)
+      summary: List policies (paginated, sorted, filtered, searchable)
       description: >
-        Returns a server-side paginated list of the user's policies for the
-        dashboard. Region and status are returned as human-readable display
-        values, and isExpiringSoon flags policies ending within 30 days.
-      operationId: getPolicies
+        Returns a server-side paginated list of policies. Supports filtering by status,
+        line of business, region, and end-date range, plus free-text search over policy
+        number and holder name. Region, status, and line of business are returned as
+        human-readable display values; isExpiringSoon flags policies ending within 30 days.
+      operationId: listPolicies
       parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by policy status.
+          schema:
+            $ref: '#/components/schemas/PolicyStatus'
+        - name: lineOfBusiness
+          in: query
+          required: false
+          description: Filter by line of business.
+          schema:
+            $ref: '#/components/schemas/LineOfBusiness'
+        - name: region
+          in: query
+          required: false
+          description: Filter by region code.
+          schema:
+            $ref: '#/components/schemas/RegionCode'
+        - name: endDateFrom
+          in: query
+          required: false
+          description: Include policies whose end date is on or after this date.
+          schema:
+            type: string
+            format: date
+        - name: endDateTo
+          in: query
+          required: false
+          description: Include policies whose end date is on or before this date.
+          schema:
+            type: string
+            format: date
+        - name: q
+          in: query
+          required: false
+          description: Free-text search over policy number and holder name.
+          schema:
+            type: string
         - name: page
           in: query
           required: false
@@ -37,6 +76,12 @@ paths:
             format: int32
             minimum: 1
             default: 10
+        - name: sort
+          in: query
+          required: false
+          description: "Sort criteria: property(,asc|desc). Example: holderName,asc"
+          schema:
+            type: string
       responses:
         '200':
           description: Paginated list of policies.
@@ -51,8 +96,119 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/policies/summary:
+    get:
+      tags:
+        - Policies
+      summary: Aggregated policy statistics
+      description: Counts by status, total premium by line of business, and the expiring-soon count.
+      operationId: getPolicySummary
+      responses:
+        '200':
+          description: Aggregated statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyStatsResponse'
+        '503':
+          description: The policy database is unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/policies/{id}:
+    get:
+      tags:
+        - Policies
+      summary: Get a single policy by ID
+      operationId: getPolicyById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Policy identifier.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The requested policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicySummaryResponse'
+        '404':
+          description: No policy exists with the given ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: The policy database is unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/policies/flag:
+    patch:
+      tags:
+        - Policies
+      summary: Bulk flag policies for review
+      description: Flags the given policies for review. Returns how many were updated and which IDs were not found.
+      operationId: flagPolicies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlagPoliciesRequest'
+      responses:
+        '200':
+          description: Flagging result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlagResultResponse'
+        '503':
+          description: The policy database is unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
+
+    PolicyStatus:
+      type: string
+      description: Internal policy status code.
+      enum:
+        - ACTIVE
+        - LAPSED
+
+    LineOfBusiness:
+      type: string
+      description: Internal line-of-business code.
+      enum:
+        - LIFE
+        - HEALTH
+        - MOTOR
+        - PROPERTY
+        - TRAVEL
+        - MARINE
+        - LIABILITY
+
+    RegionCode:
+      type: string
+      description: Internal region code.
+      enum:
+        - SG
+        - HK
+        - AU
+        - IN
+        - JP
 
     Premium:
       type: object
@@ -61,11 +217,9 @@ components:
         amount:
           type: number
           format: double
-          description: Premium amount.
           example: 1250.00
         currency:
           type: string
-          description: ISO 4217 currency code.
           example: SGD
       required:
         - amount
@@ -73,53 +227,60 @@ components:
 
     PolicySummaryResponse:
       type: object
-      description: A single policy as shown on the dashboard list.
+      description: A single policy as shown on the dashboard.
       properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
         policyNumber:
           type: string
-          description: Unique policy identifier.
           example: POL-SG-100245
         holderName:
           type: string
-          description: Name of the policy holder.
           example: Jane Tan
         region:
           type: string
-          description: >
-            Human-readable region name (e.g. Singapore, Hong Kong, Australia,
-            India, Japan) — mapped from the internal region code.
+          description: Human-readable region name.
           example: Singapore
+        lineOfBusiness:
+          type: string
+          description: Human-readable line of business.
+          example: Life
         status:
           type: string
-          description: >
-            Human-readable policy status in title case (e.g. Active, Lapsed) —
-            mapped from the internal status enum.
+          description: Human-readable status (title case).
           example: Active
         premium:
           $ref: '#/components/schemas/Premium'
         startDate:
           type: string
           format: date
-          description: Policy start date.
           example: 2024-01-15
         endDate:
           type: string
           format: date
-          description: Policy end date.
           example: 2025-01-15
         isExpiringSoon:
           type: boolean
           description: True when the policy end date is within 30 days from today.
           example: false
+        flaggedForReview:
+          type: boolean
+          description: True when the policy has been flagged for review.
+          example: false
       required:
+        - id
         - policyNumber
         - holderName
         - region
+        - lineOfBusiness
         - status
         - premium
         - startDate
         - endDate
         - isExpiringSoon
+        - flaggedForReview
 
     PagedPolicyResponse:
       type: object
@@ -127,28 +288,23 @@ components:
       properties:
         content:
           type: array
-          description: Policies in the current page.
           items:
             $ref: '#/components/schemas/PolicySummaryResponse'
         page:
           type: integer
           format: int32
-          description: Zero-based index of the current page.
           example: 0
         size:
           type: integer
           format: int32
-          description: Requested page size.
           example: 10
         totalElements:
           type: integer
           format: int64
-          description: Total number of policies across all pages.
           example: 137
         totalPages:
           type: integer
           format: int32
-          description: Total number of pages.
           example: 14
       required:
         - content
@@ -157,6 +313,77 @@ components:
         - totalElements
         - totalPages
 
+    PolicyStatsResponse:
+      type: object
+      description: Aggregated dashboard statistics.
+      properties:
+        countsByStatus:
+          type: object
+          description: Number of policies per status display name.
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            Active: 9
+            Lapsed: 3
+        totalPremiumByLineOfBusiness:
+          type: object
+          description: Total premium amount per line-of-business display name.
+          additionalProperties:
+            type: number
+            format: double
+          example:
+            Life: 110000.00
+            Motor: 45720.75
+        expiringSoonCount:
+          type: integer
+          format: int64
+          example: 5
+      required:
+        - countsByStatus
+        - totalPremiumByLineOfBusiness
+        - expiringSoonCount
+
+    FlagPoliciesRequest:
+      type: object
+      description: Identifiers of policies to flag for review.
+      properties:
+        policyIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example:
+            - 1
+            - 2
+            - 3
+      required:
+        - policyIds
+
+    FlagResultResponse:
+      type: object
+      description: Outcome of a bulk flag operation.
+      properties:
+        requested:
+          type: integer
+          format: int32
+          example: 3
+        updated:
+          type: integer
+          format: int32
+          example: 2
+        missingIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example:
+            - 999
+      required:
+        - requested
+        - updated
+        - missingIds
+
     ErrorResponse:
       type: object
       description: Standard error payload. Never exposes internal stack traces.
@@ -164,15 +391,12 @@ components:
         status:
           type: integer
           format: int32
-          description: HTTP status code.
           example: 503
         message:
           type: string
-          description: Human-readable error message.
           example: The policy service is temporarily unavailable. Please try again later.
         correlationId:
           type: string
-          description: Correlation/request ID for tracing this error.
           example: 3f1a9c20-7b4e-4f2a-9b2e-2a1c7d8e5f01
       required:
         - status
